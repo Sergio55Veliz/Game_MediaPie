@@ -1,11 +1,10 @@
 import pygame
+from constants import*
 
 # Inicializar Pygame
 pygame.init()
 
 # Configurar la ventana
-width = 800
-height = 600
 window = pygame.display.set_mode((width, height))
 
 # Configurar los cuadrados

@@ -1,12 +1,8 @@
-import pygame, random
+from __init__ import *
+from bullet import *
+from constants import*
 
-WIDTH = 800
-HEIGHT = 600
 
-BLACK = (0, 0, 0)
-
-pygame.init()
-pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shooter")
 clock = pygame.time.Clock()
@@ -22,14 +18,31 @@ class TypePlayer(Enum):  # enum class
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, self.type):
+    def __init__(self, type):
         super().__init__()
-        self.image = pygame.image.load("assets/player.png").convert()
-        self.image.set_colorkey(BLACK)
+        self.type = type
 
-        self.rect = self.image.get_rect()
+        #self.image = pygame.image.load("assets/player.png").convert()
+        #self.image.set_colorkey(BLACK)
+
+        # Cual es la diferencia entre convert y convert_alpha ??
+
+        self.surf = pygame.image.load("assets/player.png").convert_alpha()
+        self.update_mask()
+        self.original_surf = self.surf
+
+        #self.rect = self.image.get_rect()
+        self.rect = self.surf.get_rect()
         self.rect.centerx = WIDTH // 2
-        self.rect.bottom = HEIGHT - 10
+        #self.rect.bottom = HEIGHT - 10
+
+        if self.type == TypePlayer.LEFT:
+            self.rect.left = 0
+            self.surf = pygame.transform.rotate(self.original_surf, 0.5)
+        elif self.type == TypePlayer.RIGHT:
+            self.rect.right = WIDTH
+            self.surf = pygame.transform.rotate(self.original_surf, 1)
+
         self.speed_x = 0
 
     def update(self):
@@ -50,12 +63,19 @@ class Player(pygame.sprite.Sprite):
             self.rect.right = WIDTH
         if self.rect.left < 0:
             self.rect.left = 0
+        self.update_mask()
+
+    def update_mask(self):
+        # Mascara tiene un 80% del tamano para 'perdonar' al jugador en ciertas colisiones
+        maskSurface = self.surf
+        maskSurface = pygame.transform.scale(maskSurface, (WIDTH * .8, HEIGHT * .8))
+        self.mask = pygame.mask.from_surface(maskSurface)
 
 
 all_sprites = pygame.sprite.Group()
 
-player = Player()
-all_sprites.add(player)
+player = Player(TypePlayer.RIGHT)
+#all_sprites.add(player)
 
 # Game Loop
 running = True
@@ -69,11 +89,12 @@ while running:
             running = False
 
     # Update
+    screen.blit(player.surf, player.rect)
     all_sprites.update()
 
     # Draw / Render
     screen.fill(BLACK)
-    all_sprites.draw(screen)
+    #all_sprites.draw(screen)
     # *after* drawing everything, flip the display.
     pygame.display.flip()
 
