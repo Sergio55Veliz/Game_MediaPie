@@ -1,12 +1,10 @@
 from __init__ import *
 from bullet import *
-from constants import*
-
+from constants import *
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shooter")
 clock = pygame.time.Clock()
-
 
 from enum import Enum
 
@@ -18,7 +16,7 @@ class TypePlayer(Enum):  # enum class
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, type):
+    def __init__(self, type: TypePlayer):
         super().__init__()
         self.type = type
 
@@ -27,14 +25,14 @@ class Player(pygame.sprite.Sprite):
 
         # Cual es la diferencia entre convert y convert_alpha ??
 
-        #self.surf = pygame.image.load("assets/player.png").convert_alpha()
-        #self.update_mask()
-        #self.original_surf = self.surf
+        # self.surf = pygame.image.load("assets/player.png").convert_alpha()
+        # self.update_mask()
+        # self.original_surf = self.surf
 
         self.rect = self.original_surf.get_rect()
-        #self.rect = self.surf.get_rect()
+        # self.rect = self.surf.get_rect()
         self.rect.centerx = WIDTH // 2
-        #self.rect.bottom = HEIGHT - 10
+        # self.rect.bottom = HEIGHT - 10
 
         if self.type == TypePlayer.LEFT:
             self.rect.left = 0
@@ -58,15 +56,22 @@ class Player(pygame.sprite.Sprite):
                 self.speed_y = -5
             if keystate[pygame.K_DOWN]:
                 self.speed_y = 5
+            if keystate[pygame.K_SPACE]:
+                self.shoot()
+
         self.rect.y += self.speed_y
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
         if self.rect.left < 0:
             self.rect.left = 0
-        #self.update_mask()
+        if self.rect.y > HEIGHT:
+            self.rect.y = HEIGHT
+        if self.rect.y < 0:
+            self.rect.y = 0
+        # self.update_mask()
 
     def shoot(self, all_sprites, bullets):
-        bullet = Bullet(self.rect.centery, self.rect.top)
+        bullet = Bullet(self.rect.centerx, self.rect.right)
         all_sprites.add(bullet)
         all_sprites.add(bullet)
         bullets.add(bullet)
@@ -81,6 +86,7 @@ class Player(pygame.sprite.Sprite):
         maskSurface = pygame.transform.scale(maskSurface, (WIDTH * .8, HEIGHT * .8))
         self.mask = pygame.mask.from_surface(maskSurface)
     '''
+
 
 all_sprites = pygame.sprite.Group()
 
@@ -101,7 +107,7 @@ while running:
             running = False
 
     # Update
-    #screen.blit(player.surf, player.rect)
+    # screen.blit(player.surf, player.rect)
     all_sprites.update()
 
     # Draw / Render
