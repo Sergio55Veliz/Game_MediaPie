@@ -1,3 +1,5 @@
+import time
+
 from __init__ import *
 from player import *
 
@@ -27,14 +29,24 @@ def showFinishScreen(screen, clock, message_winner):
 
 
 def main():
+    # Consola
+    print("""
+*************************************
+        Mensaje de Bienvenida
+*************************************
+    """)
+    player_r_name = input("Ingrese el nombre del jugador de la derecha: ")
+    player_l_name = input("Ingrese el nombre del jugador de la izquierda: ")
+
+    # Iniciando la ventana de pygame
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     pygame.display.set_caption("Shooter")
     clock = pygame.time.Clock()
 
     all_sprites = pygame.sprite.Group()
 
-    player_r = Player(TypePlayer.RIGHT)
-    player_l = Player(TypePlayer.LEFT)
+    player_r = Player(player_r_name, TypePlayer.RIGHT)
+    player_l = Player(player_l_name, TypePlayer.LEFT)
     all_sprites.add(player_r)
     all_sprites.add(player_l)
 
@@ -68,6 +80,9 @@ def main():
         # Update
         # screen.blit(player.surf, player.rect)
         all_sprites.update()
+
+        # Cancelar disparos del oponente (colisiones entre los lasers)
+        pygame.sprite.groupcollide(player_r.bullets, player_l.bullets, True, True)  # Collides player right
 
         # Colisiones players - laser
         hits_pl = pygame.sprite.spritecollide(player_l, player_r.bullets, True)  # Collides player left

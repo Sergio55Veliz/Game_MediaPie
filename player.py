@@ -11,13 +11,10 @@ class TypePlayer(Enum):  # enum class
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, type):
+    def __init__(self, name, type):
         super().__init__()
         self.type = type
-        if self.type == TypePlayer.LEFT:
-            self.name = input("Ingrese el nombre del jugador de la izquierda: ")
-        else:
-            self.name = input("Ingrese el nombre del jugador de la derecha: ")
+        self.name = name
 
         self.original_surf = pygame.image.load("assets/player.png").convert()
         self.original_surf.set_colorkey(BLACK)
