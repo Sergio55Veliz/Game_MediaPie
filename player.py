@@ -14,6 +14,10 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, type):
         super().__init__()
         self.type = type
+        if self.type == TypePlayer.LEFT:
+            self.name = input("Ingrese el nombre del jugador de la izquierda: ")
+        else:
+            self.name = input("Ingrese el nombre del jugador de la derecha: ")
 
         self.original_surf = pygame.image.load("assets/player.png").convert()
         self.original_surf.set_colorkey(BLACK)
@@ -31,6 +35,9 @@ class Player(pygame.sprite.Sprite):
             self.image = pygame.transform.rotate(self.original_surf, 90)
 
         self.speed_y = 0
+
+        # Bullets
+        self.bullets = pygame.sprite.Group()
 
         # LIVE
         self.live = Live(BarPosition.RIGHT) if type == TypePlayer.RIGHT else Live(BarPosition.LEFT)
