@@ -1,12 +1,12 @@
 from __init__ import *
 from bullet import *
 from constants import *
+from enum import Enum
+
 
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption("Shooter")
 clock = pygame.time.Clock()
-
-from enum import Enum
 
 
 class TypePlayer(Enum):  # enum class
@@ -16,7 +16,7 @@ class TypePlayer(Enum):  # enum class
 
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, type: TypePlayer):
+    def __init__(self, type):
         super().__init__()
         self.type = type
 
@@ -56,28 +56,29 @@ class Player(pygame.sprite.Sprite):
                 self.speed_y = -5
             if keystate[pygame.K_DOWN]:
                 self.speed_y = 5
-            if keystate[pygame.K_SPACE]:
-                self.shoot()
 
         self.rect.y += self.speed_y
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
         if self.rect.left < 0:
             self.rect.left = 0
-        if self.rect.y > HEIGHT:
-            self.rect.y = HEIGHT
+        if self.rect.y > HEIGHT-self.rect.height:
+            self.rect.y = HEIGHT-self.rect.height
         if self.rect.y < 0:
             self.rect.y = 0
         # self.update_mask()
 
-    def shoot(self, all_sprites, bullets):
-        bullet = Bullet(self.rect.centerx, self.rect.right)
-        all_sprites.add(bullet)
-        all_sprites.add(bullet)
-        bullets.add(bullet)
+    def shoot(self):
+        print(self.type)
+        direction = BulletDirection.RIGHT if self.type == TypePlayer.LEFT else BulletDirection.LEFT
+        bullet = Bullet(self.rect.centerx, self.rect.centery, direction)
+        #all_sprites.add(bullet)
+        #bullets.add(bullet)
 
         # Agregamos sonido
-        bullet.sound_play()
+        Bullet.sound_play()
+
+        return bullet
 
     '''
     def update_mask(self):
@@ -89,6 +90,7 @@ class Player(pygame.sprite.Sprite):
 
 
 all_sprites = pygame.sprite.Group()
+bullets = pygame.sprite.Group()
 
 player_r = Player(TypePlayer.RIGHT)
 player_l = Player(TypePlayer.LEFT)
@@ -105,7 +107,17 @@ while running:
         # check for closing window
         if event.type == pygame.QUIT:
             running = False
-
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_d:
+                player_l.shoot()
+                bullet_l = player_l.shoot()
+                all_sprites.add(bullet_l)
+                bullets.add(bullet_l)
+            if event.key == pygame.K_LEFT:
+                player_r.shoot()
+                bullet_r = player_r.shoot()
+                all_sprites.add(bullet_r)
+                bullets.add(bullet_r)
     # Update
     # screen.blit(player.surf, player.rect)
     all_sprites.update()
