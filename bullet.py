@@ -29,7 +29,6 @@ class Bullet(pygame.sprite.Sprite):
 
     def update(self):
         self.rect.x += self.speedx
-        print(self.rect.left, "-", self.rect.right)
         if self.direction == BulletDirection.LEFT and self.rect.left < 0:
             self.kill()
         elif self.direction == BulletDirection.RIGHT and self.rect.right > WIDTH:
