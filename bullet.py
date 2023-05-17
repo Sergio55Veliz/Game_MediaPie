@@ -23,7 +23,7 @@ class Bullet(pygame.sprite.Sprite):
             self.image = pygame.transform.rotate(self.original_surf, -90)
 
         self.rect = self.image.get_rect()
-        self.rect.y = y - self.rect.height/2
+        self.rect.y = y - self.rect.height//2
         self.rect.centerx = x
         self.speedx = 10 * direction.value
 

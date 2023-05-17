@@ -1,5 +1,6 @@
 from __init__ import *
 from bullet import *
+from live import *
 from constants import *
 from enum import Enum
 
@@ -12,7 +13,6 @@ clock = pygame.time.Clock()
 class TypePlayer(Enum):  # enum class
     RIGHT = 0
     LEFT = 1
-
 
 class Player(pygame.sprite.Sprite):
 
@@ -42,6 +42,9 @@ class Player(pygame.sprite.Sprite):
             self.image = pygame.transform.rotate(self.original_surf, 90)
 
         self.speed_y = 0
+
+        # LIVE
+        self.live = Live(BarPosition.RIGHT) if type == TypePlayer.RIGHT else Live(BarPosition.LEFT)
 
     def update(self):
         self.speed_y = 0
@@ -125,6 +128,11 @@ while running:
     # Draw / Render
     screen.fill(BLACK)
     all_sprites.draw(screen)
+
+    # BARRA de vida
+    player_r.live.draw_live_bar(screen, player_r.live.value)
+    player_l.live.draw_live_bar(screen, player_l.live.value)
+
     # *after* drawing everything, flip the display.
     pygame.display.flip()
 
