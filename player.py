@@ -88,17 +88,20 @@ class Player(pygame.sprite.Sprite):
 
     def detec_head_top_down(self, topMov, bottomMov):
         pointTop = topMov[1]
-        pointDown = bottomMov[1]
-        pointCor = round(pointDown, 3) - round(pointTop, 3)
+        pointDown = bottomMov[1] 
+        pointCor = (round(pointDown, 2)-round(pointTop, 2))
+        
 
         if self.tiempoFace > 40:
-
-            if pointCor > 0.30:
-                print("abajo")
+            
+            if round(pointCor,2) < 0.12:
+                
+                print("abajo",pointCor)
                 self.speed_y = + 1
 
             else:
-                print("arriba")
+                
+                print("arriba",pointCor)
                 self.speed_y = - 1
                 self.tiempoFace = 0
 
@@ -117,10 +120,11 @@ class Player(pygame.sprite.Sprite):
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             results = self.face_mesh.process(image)
             self.webcam_image = image
+            cv2.imshow("camara",image)
             if results.multi_face_landmarks is not None:
                 for face_landmarks in results.multi_face_landmarks:
                     topMov, bottomMov, relative_distance = self.drawLines(face_landmarks)
-
+                    
                     if self.tiempoBoca > 10:
                         if not self.mouthWasOpen and relative_distance > 10:
                             pygame.event.post(pygame.event.Event(MOUTH_OPENED))
@@ -153,8 +157,8 @@ class Player(pygame.sprite.Sprite):
 
     def drawLines(self, face_landmarks):
         # coordenadas de la cara (arriba y abajo)
-        topMov = (face_landmarks.landmark[10].x, face_landmarks.landmark[10].y)
-        bottomMov = (face_landmarks.landmark[152].x, face_landmarks.landmark[152].y)
+        topMov = (face_landmarks.landmark[1].x, face_landmarks.landmark[1].y)
+        bottomMov = (face_landmarks.landmark[200].x, face_landmarks.landmark[200].y)
         # codigo extra
 
         top = (int(face_landmarks.landmark[10].x * self.webcam.width()),
