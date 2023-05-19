@@ -108,7 +108,26 @@ class Player(pygame.sprite.Sprite):
                 self.speed_y = 0
 
         self.tiempoFace += 1
+    def process_face_landmarks(self, face_landmarks, player_type):
+        (top, bottom), (nose_point, nostril_l_point, nostril_r_point), relative_distance = self.drawLines(face_landmarks)
 
+        if player_type == self.type:
+            if self.tiempoBoca > 10:
+                if not self.mouthWasOpen and relative_distance > 10:
+                    pygame.event.post(pygame.event.Event(MOUTH_OPENED))
+
+                    print("abierta", self.tiempoBoca)
+                    self.shoot()
+                    self.mouthWasOpen = True
+                elif self.mouthWasOpen and relative_distance < 6:
+                    pygame.event.post(pygame.event.Event(MOUTH_CLOSED))
+
+                    print("Cerrado", self.tiempoBoca)
+                    self.mouthWasOpen = False
+                self.tiempoBoca = 0
+            self.tiempoBoca += 1
+
+            self.detec_head_top_down(top, bottom, nose_point, nostril_l_point, nostril_r_point)
     def process_camera(self):
         image = self.webcam.read()
 
@@ -121,39 +140,18 @@ class Player(pygame.sprite.Sprite):
             results = self.face_mesh.process(image)
             self.webcam_image = image
             cv2.imshow("camara", image)
+
             if results.multi_face_landmarks is not None:
-                for face_landmarks in results.multi_face_landmarks:
-                    (top, bottom), (nose_point, nostril_l_point, nostril_r_point), relative_distance = self.drawLines(
-                        face_landmarks)
+                num_faces = len(results.multi_face_landmarks)
+                if num_faces >= 1:
+                    face_landmarks_1 = results.multi_face_landmarks[0]
+                    self.process_face_landmarks(face_landmarks_1, TypePlayer.LEFT)
 
-                    if self.tiempoBoca > 10:
-                        if not self.mouthWasOpen and relative_distance > 10:
-                            pygame.event.post(pygame.event.Event(MOUTH_OPENED))
+                if num_faces >= 2:
+                    face_landmarks_2 = results.multi_face_landmarks[1]
+                    self.process_face_landmarks(face_landmarks_2, TypePlayer.RIGHT)
 
-                            print("abierta", self.tiempoBoca)
-                            '''
-                            laser = Laser()
-                            # posicion  de nave con el cohete
-                            laser.rect.x = self.player.rect.x
-                            laser.rect.y = self.player.rect.y
-                            self.laser.add(laser)
-                            '''
-                            # Ejecutamos el disparo
-                            self.shoot()
-                            self.mouthWasOpen = True
-                        elif self.mouthWasOpen and relative_distance < 6:
-                            pygame.event.post(pygame.event.Event(MOUTH_CLOSED))
-
-                            print("Cerrado", self.tiempoBoca)
-                            self.mouthWasOpen = False
-                        self.tiempoBoca = 0
-                    self.tiempoBoca += 1
-
-                    # Deteccion de angulo
-                    # self.detect_head_movement(top, bottom)
-
-                    # Detección Mover arriba abajo
-                    self.detec_head_top_down(top, bottom, nose_point, nostril_l_point, nostril_r_point)
+                    
 
     def drawLines(self, face_landmarks):
         # Obtener los puntos de la frente y barbilla

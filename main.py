@@ -62,10 +62,12 @@ def main():
             min_detection_confidence=0.5,
             refine_landmarks=True
     ) as face_mesh:
+        
+        
         player_r = Player(player_r_name, TypePlayer.RIGHT, face_mesh)
-        #player_l = Player(player_l_name, TypePlayer.LEFT)
+        player_l = Player(player_l_name, TypePlayer.LEFT,face_mesh)
         all_sprites.add(player_r)
-        #all_sprites.add(player_l)
+        all_sprites.add(player_l)
 
         while running:
             '''
@@ -105,8 +107,12 @@ def main():
                 # screen.blit(player.surf, player.rect)
                 all_sprites.update()
                 player_r.bullets.update()
-                #player_l.bullets.update()
+                player_l.bullets.update()
 
+                ########algoinixio
+                
+                ########algofin
+                
                 # Cancelar disparos del oponente (colisiones entre los lasers)
                 #pygame.sprite.groupcollide(player_r.bullets, player_l.bullets, True, True)  # Collides player right
 
@@ -133,7 +139,7 @@ def main():
 
                 # BARRA de vida
                 player_r.live.draw_live_bar(screen, player_r.live.value)
-                #player_l.live.draw_live_bar(screen, player_l.live.value)
+                player_l.live.draw_live_bar(screen, player_l.live.value)
 
                 # *after* drawing everything, flip the display.
                 pygame.display.flip()
