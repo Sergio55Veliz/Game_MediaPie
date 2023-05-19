@@ -76,6 +76,7 @@ class Player(pygame.sprite.Sprite):
         '''
 
         self.rect.y += self.speed_y
+        print(self.rect.y)
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
         if self.rect.left < 0:
@@ -89,23 +90,20 @@ class Player(pygame.sprite.Sprite):
     def detec_head_top_down(self, topMov, bottomMov):
         pointTop = topMov[1]
         pointDown = bottomMov[1] 
-        pointCor = (round(pointDown, 2)-round(pointTop, 2))
+        pointCor = round(pointDown - pointTop, 2)
         
 
         if self.tiempoFace > 40:
-            
-            if round(pointCor,2) < 0.12:
-                
-                print("abajo",pointCor)
-                self.speed_y = + 1
-
-            else:
-                
-                print("arriba",pointCor)
-                self.speed_y = - 1
+            if pointCor < 0.18:
+                print("abajo", pointCor)
+                self.speed_y = + 5
                 self.tiempoFace = 0
-
-            self.speed_y = 0
+            elif pointCor > 0.25:
+                print("arriba", pointCor)
+                self.speed_y = - 5
+                self.tiempoFace = 0
+            else:
+                self.speed_y = 0
 
         self.tiempoFace += 1
 

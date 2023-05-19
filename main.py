@@ -86,8 +86,8 @@ def main():
                         has_started = True
             else:
                 if game_over:
-                    message_winner = messageWinner(player_r, player_l)
-                    showFinishScreen(screen, clock, message_winner)
+                    #message_winner = messageWinner(player_r, player_l)
+                    #showFinishScreen(screen, clock, message_winner)
                     running = False
 
                 # Keep loop running at the right speed
