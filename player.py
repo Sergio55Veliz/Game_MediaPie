@@ -5,7 +5,7 @@ from events import *
 
 from webcam import *
 import mediapipe as mp
-import math
+from math import sqrt
 
 from enum import Enum
 
@@ -76,7 +76,6 @@ class Player(pygame.sprite.Sprite):
         '''
 
         self.rect.y += self.speed_y
-        print(self.rect.y)
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
         if self.rect.left < 0:
@@ -87,20 +86,23 @@ class Player(pygame.sprite.Sprite):
             self.rect.y = 0
         # self.update_mask()
 
-    def detec_head_top_down(self, topMov, bottomMov):
-        pointTop = topMov[1]
-        pointDown = bottomMov[1] 
-        pointCor = round(pointDown - pointTop, 2)
-        
+    def detec_head_top_down(self, top_point, bottom_point, nostril_l_point, nostril_r_point, nose_point):
+        distance = self.distance_nose(nostril_l=nostril_l_point,
+                                      nostril_r=nostril_r_point,
+                                      nose=nose_point
+                                      )
+        print("distance:", distance)
+        length_head = sqrt((top_point[0] - bottom_point[0]) ** 2 + (top_point[1] - bottom_point[1]) ** 2)
+        absolute_distance = round(distance / length_head, 3)
 
         if self.tiempoFace > 40:
-            if pointCor < 0.18:
-                print("abajo", pointCor)
-                self.speed_y = + 5
-                self.tiempoFace = 0
-            elif pointCor > 0.25:
-                print("arriba", pointCor)
+            if absolute_distance > 0.08:
+                print("ARRIBA", absolute_distance)
                 self.speed_y = - 5
+                self.tiempoFace = 0
+            elif absolute_distance < -0.04:
+                print("ABAJO", absolute_distance)
+                self.speed_y = + 5
                 self.tiempoFace = 0
             else:
                 self.speed_y = 0
@@ -118,11 +120,12 @@ class Player(pygame.sprite.Sprite):
             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
             results = self.face_mesh.process(image)
             self.webcam_image = image
-            cv2.imshow("camara",image)
+            cv2.imshow("camara", image)
             if results.multi_face_landmarks is not None:
                 for face_landmarks in results.multi_face_landmarks:
-                    topMov, bottomMov, relative_distance = self.drawLines(face_landmarks)
-                    
+                    (top, bottom), (nose_point, nostril_l_point, nostril_r_point), relative_distance = self.drawLines(
+                        face_landmarks)
+
                     if self.tiempoBoca > 10:
                         if not self.mouthWasOpen and relative_distance > 10:
                             pygame.event.post(pygame.event.Event(MOUTH_OPENED))
@@ -147,18 +150,13 @@ class Player(pygame.sprite.Sprite):
                     self.tiempoBoca += 1
 
                     # Deteccion de angulo
-                    #self.detect_head_movement(top, bottom)
+                    # self.detect_head_movement(top, bottom)
 
                     # Detección Mover arriba abajo
-                    self.detec_head_top_down(topMov, bottomMov)
-                    # print((topMov[1], (bottomMov[1])))
+                    self.detec_head_top_down(top, bottom, nose_point, nostril_l_point, nostril_r_point)
 
     def drawLines(self, face_landmarks):
-        # coordenadas de la cara (arriba y abajo)
-        topMov = (face_landmarks.landmark[1].x, face_landmarks.landmark[1].y)
-        bottomMov = (face_landmarks.landmark[200].x, face_landmarks.landmark[200].y)
-        # codigo extra
-
+        # Obtener los puntos de la frente y barbilla
         top = (int(face_landmarks.landmark[10].x * self.webcam.width()),
                int(face_landmarks.landmark[10].y * self.webcam.height()))
         bottom = (int(face_landmarks.landmark[152].x * self.webcam.width()),
@@ -169,8 +167,13 @@ class Player(pygame.sprite.Sprite):
         downmouth = (int(face_landmarks.landmark[14].x * self.webcam.width()),
                      int(face_landmarks.landmark[14].y * self.webcam.height()))
 
-        # topmouth=(face_landmarks.landmark[13].x, face_landmarks.landmark[13].y)
-        # downmouth=(face_landmarks.landmark[14].x, face_landmarks.landmark[14].y)
+        # Obtener los puntos de nariz y fosas nazales
+        nose_point = (int(face_landmarks.landmark[1].x * self.webcam.width()),
+                      int(face_landmarks.landmark[1].y * self.webcam.height()))
+        nostril_l_point = (int(face_landmarks.landmark[203].x * self.webcam.width()),
+                           int(face_landmarks.landmark[203].y * self.webcam.height()))
+        nostril_r_point = (int(face_landmarks.landmark[423].x * self.webcam.width()),
+                           int(face_landmarks.landmark[423].y * self.webcam.height()))
 
         # Obtener coordenadas del 'cuadrado' de la cara para poder mostrarlo en la pantalla despues
         self.face_left_x = face_landmarks.landmark[234].x
@@ -184,37 +187,30 @@ class Player(pygame.sprite.Sprite):
         self.face_top_y = self.face_top_y - .1
         self.face_bottom_y = self.face_bottom_y + .1
 
+        '''
+        # Linea media
         cv2.line(
             self.webcam_image,
-            (int(top[0] * self.webcam.width()), int(top[1] * self.webcam.height())),
-            (int(bottom[0] * self.webcam.width()), int(bottom[1] * self.webcam.height())),
+            top, bottom,
             (0, 255, 0), 3
         )
+        '''
 
-        # cordenadas circulo
+        # Draw frente y barbilla
         cv2.circle(self.webcam_image,
-                   (int(topMov[0] * self.webcam.width()), int(topMov[1] * self.webcam.height())), 8,
+                   top, 8,
                    (0, 0, 255), -1)
         cv2.circle(self.webcam_image,
-                   (int(bottomMov[0] * self.webcam.width()), int(bottomMov[1] * self.webcam.height())), 8,
+                   bottom, 8,
                    (0, 0, 255), -1)
-
+        # nariz
+        cv2.line(self.webcam_image, nostril_l_point, nostril_r_point, (0, 255, 0), 2)
         cv2.circle(self.webcam_image,
-                   (int(top[0] * self.webcam.width()), int(top[1] * self.webcam.height())), 8, (0, 0, 255),
-                   -1)
-        cv2.circle(self.webcam_image,
-                   (int(bottom[0] * self.webcam.width()), int(bottom[1] * self.webcam.height())), 8,
+                   nose_point, 5,
                    (0, 0, 255), -1)
-        # extra
-        cv2.circle(self.webcam_image,
-                   (int(topmouth[0] * self.webcam.width()), int(topmouth[1] * self.webcam.height())), 8,
-                   (255, 0, 0), -1)
-        cv2.circle(self.webcam_image,
-                   (int(downmouth[0] * self.webcam.width()), int(downmouth[1] * self.webcam.height())), 8,
-                   (255, 0, 0), -1)
 
         # boca Abierta
-        distanceBetweenMouthPoints = math.sqrt(
+        distanceBetweenMouthPoints = sqrt(
             pow(int(topmouth[0]) - int(downmouth[0]), 2) +
             pow(int(topmouth[1]) - int(downmouth[1]), 2)
         )
@@ -223,10 +219,22 @@ class Player(pygame.sprite.Sprite):
         # Obtener la distancia real de la boca dividida entre la cara
         # para que sea mas 'relativamente constante'
         real_distance = int(distanceBetweenMouthPoints) * self.webcam.height()
-
         relative_distance = int(real_distance) / int(face_height)
 
-        return topMov, bottomMov, relative_distance
+        return (top, bottom), (nose_point, nostril_l_point, nostril_r_point), relative_distance
+
+    def distance_nose(self, nostril_l, nostril_r, nose):
+        n_x, n_y = nose
+        nl_x, nl_y = nostril_l
+        nr_x, nr_y = nostril_r
+
+        # ax + by + c = 0
+        m = (nr_y - nl_y) / (nr_x - nl_x)
+        a, b, c = -m, 1, -nr_y + m * nr_x
+        #print("pendiente: ", m)
+        distance = (a * n_x + b * n_y + c) / sqrt(a ** 2 + b ** 2)
+
+        return distance
 
     def shoot(self):
         direction = BulletDirection.RIGHT if self.type == TypePlayer.LEFT else BulletDirection.LEFT
@@ -235,4 +243,3 @@ class Player(pygame.sprite.Sprite):
 
         # Agregamos sonido
         Bullet.sound_play()
-
