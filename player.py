@@ -1,10 +1,16 @@
 from bullet import *
+#from dosrsotros import distance_nose
 from live import *
 from constants import *
 from events import *
+#from mediapipe_doscaras_test import distance_nose
 
 from webcam import *
 import mediapipe as mp
+from math import sqrt
+import cv2
+import mediapipe as mp
+
 from math import sqrt
 
 from enum import Enum
@@ -14,8 +20,38 @@ class TypePlayer(Enum):  # enum class
     RIGHT = 0
     LEFT = 1
 
-
+    
 class Player(pygame.sprite.Sprite):
+    def distance_nose2(nostril_l, nostril_r, nose):
+        n_x, n_y = nose
+        nl_x, nl_y = nostril_l
+        nr_x, nr_y = nostril_r
+
+        # ax + by + c = 0
+        m = (nr_y - nl_y) / (nr_x - nl_x)
+        a, b, c = -m, 1, -nr_y + m * nr_x
+        print("pendiente: ", m)
+        distance = (a * n_x + b * n_y + c) / sqrt(a ** 2 + b ** 2)
+
+        if m == 0:
+            y2 = nr_y
+        else:
+            y2 = -(a * n_x + c) / b
+        q_point = (int(n_x), int(y2))
+
+        return -distance, q_point
+    def distance_nose(self, nostril_l, nostril_r, nose):
+        n_x, n_y = nose
+        nl_x, nl_y = nostril_l
+        nr_x, nr_y = nostril_r
+
+        # ax + by + c = 0
+        m = (nr_y - nl_y) / (nr_x - nl_x)
+        a, b, c = -m, 1, -nr_y + m * nr_x
+        #print("pendiente: ", m)
+        distance = (a * n_x + b * n_y + c) / sqrt(a ** 2 + b ** 2)
+
+        return distance
 
     def __init__(self, name, type, face_mesh):
         super().__init__()
@@ -108,9 +144,11 @@ class Player(pygame.sprite.Sprite):
                 self.speed_y = 0
 
         self.tiempoFace += 1
+    #rfuncion para el movimiento de abierto o cerrado
     def process_face_landmarks(self, face_landmarks, player_type):
         (top, bottom), (nose_point, nostril_l_point, nostril_r_point), relative_distance = self.drawLines(face_landmarks)
-
+        # Obtener las coordenadas de la nariz
+        print("uso")
         if player_type == self.type:
             if self.tiempoBoca > 10:
                 if not self.mouthWasOpen and relative_distance > 10:
@@ -126,33 +164,86 @@ class Player(pygame.sprite.Sprite):
                     self.mouthWasOpen = False
                 self.tiempoBoca = 0
             self.tiempoBoca += 1
-
             self.detec_head_top_down(top, bottom, nose_point, nostril_l_point, nostril_r_point)
+  
+
+    
     def process_camera(self):
+        face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
+
+        # Variables para almacenar los rostros registrados
+        registered_faces = []
+
         image = self.webcam.read()
 
+            # Convertir a escala de grises
         if image is not None:
-            image.flags.writeable = False
-            image = cv2.flip(image, 1)
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image.flags.writeable = True
-            image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-            results = self.face_mesh.process(image)
-            self.webcam_image = image
-            cv2.imshow("camara", image)
+          
+             image.flags.writeable = False
+             image = cv2.flip(image, 1)
+             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+             image.flags.writeable = True
+             image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+             results = self.face_mesh.process(image)
+             self.webcam_image = image
+             #cv2.imshow("camara", image)
 
-            if results.multi_face_landmarks is not None:
+            # Detectar rostros en la imagen
+             faces = face_cascade.detectMultiScale(image, scaleFactor=1.3, minNeighbors=5)
+             registered_faces = []
+             for (x, y, w, h) in faces:
+                    # Dibujar un rectángulo alrededor del rostro detectado
+                    cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+                    # Extraer el rostro de la imagen en escala de grises
+                    face = image[y:y + h, x:x + w]
+
+                    # Agregar el rostro a la lista de rostros registrados
+                    registered_faces.append(face)
+
+                # Mostrar la imagen en una ventana
+             print(registered_faces)
+             cv2.imshow('Face Registration', image)
+           
+             
+             if results.multi_face_landmarks is not None:
                 num_faces = len(results.multi_face_landmarks)
-                if num_faces >= 1:
-                    face_landmarks_1 = results.multi_face_landmarks[0]
-                    self.process_face_landmarks(face_landmarks_1, TypePlayer.LEFT)
+                
+                if num_faces >=  1:
+                     face_landmarks_1 = results.multi_face_landmarks[0]
+                     print("izquierda")
+                     self.process_face_landmarks(face_landmarks_1, TypePlayer.LEFT)
 
-                if num_faces >= 2:
-                    face_landmarks_2 = results.multi_face_landmarks[1]
-                    self.process_face_landmarks(face_landmarks_2, TypePlayer.RIGHT)
+                elif num_faces >= 2:
+                     face_landmarks_2 = results.multi_face_landmarks[1]
+                     print("derecha")
+                     self.process_face_landmarks(face_landmarks_2, TypePlayer.RIGHT)
+            
+                
+            # image = self.webcam.read()
 
-                    
+        # if image is not None:
+        #     image.flags.writeable = False
+        #     image = cv2.flip(image, 1)
+        #     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        #     image.flags.writeable = True
+        #     image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        #     results = self.face_mesh.process(image)
+        #     self.webcam_image = image
+        #     cv2.imshow("camara", image)
 
+        #     if results.multi_face_landmarks is not None:
+        #         num_faces = len(results.multi_face_landmarks)
+        #         print(num_faces)
+        #         if num_faces >= 1:
+        #             face_landmarks_1 = results.multi_face_landmarks[0]
+        #             self.process_face_landmarks(face_landmarks_1, TypePlayer.LEFT)
+
+        #         if num_faces >= 2:
+        #             face_landmarks_2 = results.multi_face_landmarks[1]
+        #             self.process_face_landmarks(face_landmarks_2, TypePlayer.RIGHT)
+
+    # 
     def drawLines(self, face_landmarks):
         # Obtener los puntos de la frente y barbilla
         top = (int(face_landmarks.landmark[10].x * self.webcam.width()),
@@ -195,17 +286,17 @@ class Player(pygame.sprite.Sprite):
         '''
 
         # Draw frente y barbilla
-        cv2.circle(self.webcam_image,
-                   top, 8,
-                   (0, 0, 255), -1)
-        cv2.circle(self.webcam_image,
-                   bottom, 8,
-                   (0, 0, 255), -1)
-        # nariz
-        cv2.line(self.webcam_image, nostril_l_point, nostril_r_point, (0, 255, 0), 2)
-        cv2.circle(self.webcam_image,
-                   nose_point, 5,
-                   (0, 0, 255), -1)
+        # cv2.circle(self.webcam_image,
+        #            top, 8,
+        #            (0, 0, 255), -1)
+        # cv2.circle(self.webcam_image,
+        #            bottom, 8,
+        #            (0, 0, 255), -1)
+        # # nariz
+        # cv2.line(self.webcam_image, nostril_l_point, nostril_r_point, (0, 255, 0), 2)
+        # cv2.circle(self.webcam_image,
+        #            nose_point, 5,
+        #            (0, 0, 255), -1)
 
         # boca Abierta
         distanceBetweenMouthPoints = sqrt(
@@ -221,19 +312,7 @@ class Player(pygame.sprite.Sprite):
 
         return (top, bottom), (nose_point, nostril_l_point, nostril_r_point), relative_distance
 
-    def distance_nose(self, nostril_l, nostril_r, nose):
-        n_x, n_y = nose
-        nl_x, nl_y = nostril_l
-        nr_x, nr_y = nostril_r
-
-        # ax + by + c = 0
-        m = (nr_y - nl_y) / (nr_x - nl_x)
-        a, b, c = -m, 1, -nr_y + m * nr_x
-        #print("pendiente: ", m)
-        distance = (a * n_x + b * n_y + c) / sqrt(a ** 2 + b ** 2)
-
-        return distance
-
+    
     def shoot(self):
         direction = BulletDirection.RIGHT if self.type == TypePlayer.LEFT else BulletDirection.LEFT
         bullet = Bullet(self.rect.centerx, self.rect.centery, direction)

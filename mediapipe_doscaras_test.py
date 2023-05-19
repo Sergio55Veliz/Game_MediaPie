@@ -33,7 +33,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
 
 # Configurar la captura de video desde la cámara
-cap = cv2.VideoCapture(1)  # Cambiar el índice si tienes varias cámaras
+cap = cv2.VideoCapture(0)  # Cambiar el índice si tienes varias cámaras
 face_mesh_global = None
 with mp_face_mesh.FaceMesh(
         max_num_faces=2,  # Máximo de 2 caras
