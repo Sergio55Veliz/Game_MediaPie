@@ -16,14 +16,15 @@ class Webcam:
         return self
 
     def update(self):
+        webcam_index = 1
         if self.stream is None:
             if self.os_name == "Windows":
                 #self.stream = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-                self.stream = cv2.VideoCapture(0)
+                self.stream = cv2.VideoCapture(webcam_index)
             elif self.os_name == "Darwin": #macOS
-                self.stream = cv2.VideoCapture(0, cv2.CAP_AVFOUNDATION)
+                self.stream = cv2.VideoCapture(webcam_index, cv2.CAP_AVFOUNDATION)
             else: # Linux
-                self.stream = cv2.VideoCapture(0, cv2.CAP_V4L)
+                self.stream = cv2.VideoCapture(webcam_index, cv2.CAP_V4L)
         while True:
             if self.stopped:
                 return

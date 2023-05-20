@@ -62,10 +62,8 @@ def main():
             min_detection_confidence=0.5,
             refine_landmarks=True
     ) as face_mesh:
-        
-        
-        player_r = Player(player_r_name, TypePlayer.RIGHT, face_mesh)
-        player_l = Player(player_l_name, TypePlayer.LEFT,face_mesh)
+        player_r = Player(player_r_name, TypePlayer.RIGHT, None)
+        player_l = Player(player_l_name, TypePlayer.LEFT, face_mesh)
         all_sprites.add(player_r)
         all_sprites.add(player_l)
 
@@ -88,8 +86,8 @@ def main():
                         has_started = True
             else:
                 if game_over:
-                    #message_winner = messageWinner(player_r, player_l)
-                    #showFinishScreen(screen, clock, message_winner)
+                    message_winner = messageWinner(player_r, player_l)
+                    showFinishScreen(screen, clock, message_winner)
                     running = False
 
                 # Keep loop running at the right speed
@@ -97,9 +95,9 @@ def main():
                 # Process input (events)
                 for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_d:
-                            #player_l.shoot()
-                            print("Izquierda dispara")
+                        #if event.key == pygame.K_d:
+                        #    #player_l.shoot()
+                        #    print("Izquierda dispara")
                         if event.key == pygame.K_LEFT:
                             player_r.shoot()
                             print("Derecha dispara")
@@ -109,33 +107,29 @@ def main():
                 player_r.bullets.update()
                 player_l.bullets.update()
 
-                ########algoinixio
-                
-                ########algofin
-                
                 # Cancelar disparos del oponente (colisiones entre los lasers)
-                #pygame.sprite.groupcollide(player_r.bullets, player_l.bullets, True, True)  # Collides player right
+                pygame.sprite.groupcollide(player_r.bullets, player_l.bullets, True, True)  # Collides player right
 
                 # Colisiones players - laser
-                #hits_pl = pygame.sprite.spritecollide(player_l, player_r.bullets, True)  # Collides player left
-                #for hit in hits_pl:
-                #    player_l.live.value -= 25
-                #    if player_l.live.value <= 0:
-                #        # running = False
-                #        game_over = True
+                hits_pl = pygame.sprite.spritecollide(player_l, player_r.bullets, True)  # Collides player left
+                for hit in hits_pl:
+                    player_l.live.value -= 25
+                    if player_l.live.value <= 0:
+                        # running = False
+                        game_over = True
 
-                #hits_pr = pygame.sprite.spritecollide(player_r, player_l.bullets, True)  # Collides player right
-                #for hit in hits_pr:
-                #    player_r.live.value -= 25
-                #    if player_r.live.value <= 0:
-                #        # running = False
-                #        game_over = True
+                hits_pr = pygame.sprite.spritecollide(player_r, player_l.bullets, True)  # Collides player right
+                for hit in hits_pr:
+                    player_r.live.value -= 25
+                    if player_r.live.value <= 0:
+                        # running = False
+                        game_over = True
 
                 # Draw / Render
                 screen.fill(BLACK)
                 all_sprites.draw(screen)
                 player_r.bullets.draw(screen)
-                #player_l.bullets.draw(screen)
+                player_l.bullets.draw(screen)
 
                 # BARRA de vida
                 player_r.live.draw_live_bar(screen, player_r.live.value)

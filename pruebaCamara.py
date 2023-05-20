@@ -1,11 +1,12 @@
 import cv2
 
 # Capturar el flujo de video de la cámara
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 while True:
     # Leer el fotograma actual
     ret, frame = cap.read()
+    frame = cv2.flip(frame, 1)
 
     # Dividir la imagen en dos mitades
     height, width, _ = frame.shape
