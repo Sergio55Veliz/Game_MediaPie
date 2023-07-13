@@ -39,16 +39,16 @@ class Player(pygame.sprite.Sprite):
 
         # Modo de control
         control_mode = input(f"\n{self.name} elija su preferencia de control:"
-                             f"\t1. Control por teclado"
-                             f"\t2. Control "
-                             f"por Gestos\n\tELIJE (1 ó 2): ")
+                             f"\n\t1. Control por teclado"
+                             f"\n\t2. Control por Gestos"
+                             f"\n\tELIJE (1 ó 2): ")
         while control_mode not in ["1", "2"]:
-            print("\nXXXXX Elije solo entre los valores de 1 y 2 XXXXX")
+            print("\nXXXXXXXX Elije solo entre los valores de 1 y 2 XXXXXXXX")
             control_mode = input(
                 f"\n{self.name} elija su preferencia de control:"
-                f"\t1. Control por teclado"
-                f"\t2. Control "
-                f"Gestos\n\tELIJE (1 ó 2): ")
+                f"\n\t1. Control por teclado"
+                f"\n\t2. Control por Gestos"
+                f"\n\tELIJE (1 ó 2): ")
         if control_mode == "1":
             face_mesh = None
 
