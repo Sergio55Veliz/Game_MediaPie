@@ -12,7 +12,7 @@ mp_face_mesh = mp.solutions.face_mesh.FaceMesh(
 )
 
 
-def distance_nose(nostril_l, nostril_r, nose):
+def distance_nose(nostril_l, nostril_r, nose, verbose=False):
     n_x, n_y = nose
     nl_x, nl_y = nostril_l
     nr_x, nr_y = nostril_r
@@ -20,7 +20,7 @@ def distance_nose(nostril_l, nostril_r, nose):
     # ax + by + c = 0
     m = (nr_y - nl_y) / (nr_x - nl_x)
     a, b, c = -m, 1, -nr_y + m * nr_x
-    print("pendiente: ", m)
+    if verbose: print("pendiente: ", m)
     distance = (a * n_x + b * n_y + c) / sqrt(a ** 2 + b ** 2)
 
     if m == 0:
@@ -74,14 +74,14 @@ def get_points(face_landmarks, image_shape):
 
     height_ROI, width_ROI = (face_bottom_y-face_top_y, face_right_x-face_left_x)
     center_h, center_w = (face_top_y + height_ROI/2, face_left_x + width_ROI/2)
-    print("----- Dimensión ROI:", height_ROI, width_ROI)
+    #print("----- Dimensión ROI:", height_ROI, width_ROI)
     # Creamos un ROI cuadrado escogiendo el eje más grande
     if height_ROI < width_ROI:
-        print("ancho >>>>> alto")
+        #print("ancho >>>>> alto")
         face_top_y = int(center_h - width_ROI/2)
         face_bottom_y = int(center_h + width_ROI/2)
     elif height_ROI > width_ROI:
-        print("ancho <<<<< alto")
+        #print("ancho <<<<< alto")
         face_left_x = int(center_w - height_ROI/2)
         face_right_x = int(center_w + height_ROI/2)
 
@@ -105,7 +105,7 @@ def get_points(face_landmarks, image_shape):
     center_h, center_w = (face_top_y + height_ROI/2, face_left_x + width_ROI/2)
     # en caso de que la cara esté muy cerca simplemente recortamos el alto y perderemos parte de la imagen a presentar
     if face_left_x <= 0 and face_right_x >= width:
-        print("Puntos anchura:", face_left_x, face_right_x, width)
+        #print("Puntos anchura:", face_left_x, face_right_x, width)
         face_left_x, face_right_x = 0, width
         face_top_y = int(center_h - width/2)
         face_bottom_y = int(center_h + width/2)
@@ -125,6 +125,8 @@ def add_points_to_image(image, movement_points, face_rectangle_points):
     nostril_l_point, nostril_r_point, nose_point, q_point, top_point, bottom_point = movement_points
     face_left_x, face_right_x, face_top_y, face_bottom_y = face_rectangle_points
     thikness_factor = (face_right_x - face_left_x)/image.shape[1] # ancho de cara / ancho de imagen, este es un factor de cercanía
+    thikness_factor = 0.5 if thikness_factor<=0.5 else thikness_factor
+
     cv2.line(image, nostril_l_point, nostril_r_point, (0, 255, 0), 2)
     cv2.circle(image,
                nose_point, round(5*thikness_factor),
@@ -155,14 +157,15 @@ def detect_face(image,
     # Detectar rostros en la imagen
     results = mp_face_mesh.process(image_rgb)
     if results.multi_face_landmarks:
-        print("Número de caras detectadas: {}".format(len(results.multi_face_landmarks)))
+        #print("Número de caras detectadas: {}".format(len(results.multi_face_landmarks)))
         for face_landmarks in results.multi_face_landmarks:
             movement_points, face_rectangle_points = get_points(face_landmarks, (height, width))
             nostril_l_point, nostril_r_point, nose_point, top_point, bottom_point = movement_points
 
             distance, q_point = distance_nose(nostril_l=nostril_l_point,
                                               nostril_r=nostril_r_point,
-                                              nose=nose_point
+                                              nose=nose_point,
+                                              verbose=verbose
                                               )
             if verbose: print("\ndistance:", distance)
             length_head = sqrt((top_point[0] - bottom_point[0]) ** 2 + (top_point[1] - bottom_point[1]) ** 2)
@@ -183,7 +186,7 @@ def detect_face(image,
             # Selección del ROI de la cara
             face_left_x, face_right_x, face_top_y, face_bottom_y = face_rectangle_points
             height_ROI, width_ROI = (face_bottom_y - face_top_y, face_right_x - face_left_x)
-            print("----- NEW Dimensión ROI:", height_ROI, width_ROI)
+            #print("----- NEW Dimensión ROI:", height_ROI, width_ROI)
             roi = image[face_top_y: face_bottom_y,
                         face_left_x: face_right_x,
                         :]
