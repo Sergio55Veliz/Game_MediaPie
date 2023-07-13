@@ -2,6 +2,7 @@ import time
 
 from __init__ import *
 from player import *
+from webcam import *
 
 
 def draw_text(screen, text, size, x, y):
@@ -53,90 +54,81 @@ def main():
     game_over = False
 
     # Facemesh
-    mp_face_mesh = mp.solutions.face_mesh
-    mp_drawing = mp.solutions.drawing_utils
-    mp_drawing_styles = mp.solutions.drawing_styles
-    with mp_face_mesh.FaceMesh(
-            static_image_mode=False,
-            max_num_faces=1,
-            min_detection_confidence=0.5,
-            refine_landmarks=True
-    ) as face_mesh:
-        player_r = Player(player_r_name, TypePlayer.RIGHT, None)
-        player_l = Player(player_l_name, TypePlayer.LEFT, face_mesh)
-        all_sprites.add(player_r)
-        all_sprites.add(player_l)
+    mp_face_mesh = mp.solutions.face_mesh.FaceMesh(
+        max_num_faces=1,  # Máximo de 1 cara a detectar
+        min_detection_confidence=0.5,
+        min_tracking_confidence=0.5
+    )
 
-        while running:
-            '''
-            events = [e.type for e in pygame.event.get()]
-            if pygame.QUIT in events:
-                print("Si funciona, hay que remover los for y dejarlo en una sola variable events")
-            '''
+    webcam.start()
+    time.sleep(1)
+    player_r = Player(player_r_name, TypePlayer.RIGHT, mp_face_mesh)
+    player_l = Player(player_l_name, TypePlayer.LEFT, mp_face_mesh)
+    all_sprites.add(player_r)
+    all_sprites.add(player_l)
+
+    while running:
+        '''
+        events = [e.type for e in pygame.event.get()]
+        if pygame.QUIT in events:
+            print("Si funciona, hay que remover los for y dejarlo en una sola variable events")
+        '''
+        for event in pygame.event.get():
+            # check for closing window
+            if event.type == pygame.QUIT:
+                running = False
+
+        if not has_started:
+            # TODO: Ventana de inicio
             for event in pygame.event.get():
-                # check for closing window
-                if event.type == pygame.QUIT:
-                    running = False
+                #Cuando no hemos empezado, ENTER comienza el juego
+                if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
+                    has_started = True
+        else:
+            if game_over:
+                message_winner = messageWinner(player_r, player_l)
+                showFinishScreen(screen, clock, message_winner)
+                running = False
 
-            if not has_started:
-                # TODO: Ventana de inicio
-                for event in pygame.event.get():
-                    #Cuando no hemos empezado, ENTER comienza el juego
-                    if event.type == pygame.KEYDOWN and event.key == pygame.K_RETURN:
-                        has_started = True
-            else:
-                if game_over:
-                    message_winner = messageWinner(player_r, player_l)
-                    showFinishScreen(screen, clock, message_winner)
-                    running = False
+            # Keep loop running at the right speed
+            clock.tick(60)
 
-                # Keep loop running at the right speed
-                clock.tick(60)
-                # Process input (events)
-                for event in pygame.event.get():
-                    if event.type == pygame.KEYDOWN:
-                        #if event.key == pygame.K_d:
-                        #    #player_l.shoot()
-                        #    print("Izquierda dispara")
-                        if event.key == pygame.K_LEFT:
-                            player_r.shoot()
-                            print("Derecha dispara")
-                # Update
-                # screen.blit(player.surf, player.rect)
-                all_sprites.update()
-                player_r.bullets.update()
-                player_l.bullets.update()
+            # Update
+            # screen.blit(player.surf, player.rect)
+            all_sprites.update()
+            player_r.bullets.update()
+            player_l.bullets.update()
 
-                # Cancelar disparos del oponente (colisiones entre los lasers)
-                pygame.sprite.groupcollide(player_r.bullets, player_l.bullets, True, True)  # Collides player right
+            # Cancelar disparos del oponente (colisiones entre los lasers)
+            pygame.sprite.groupcollide(player_r.bullets, player_l.bullets, True, True)  # Collides player right
 
-                # Colisiones players - laser
-                hits_pl = pygame.sprite.spritecollide(player_l, player_r.bullets, True)  # Collides player left
-                for hit in hits_pl:
-                    player_l.live.value -= 25
-                    if player_l.live.value <= 0:
-                        # running = False
-                        game_over = True
+            # Colisiones players - laser
+            hits_pl = pygame.sprite.spritecollide(player_l, player_r.bullets, True)  # Collides player left
+            for hit in hits_pl:
+                player_l.live.value -= 25
+                if player_l.live.value <= 0:
+                    # running = False
+                    game_over = True
 
-                hits_pr = pygame.sprite.spritecollide(player_r, player_l.bullets, True)  # Collides player right
-                for hit in hits_pr:
-                    player_r.live.value -= 25
-                    if player_r.live.value <= 0:
-                        # running = False
-                        game_over = True
+            hits_pr = pygame.sprite.spritecollide(player_r, player_l.bullets, True)  # Collides player right
+            for hit in hits_pr:
+                player_r.live.value -= 25
+                if player_r.live.value <= 0:
+                    # running = False
+                    game_over = True
 
-                # Draw / Render
-                screen.fill(BLACK)
-                all_sprites.draw(screen)
-                player_r.bullets.draw(screen)
-                player_l.bullets.draw(screen)
+            # Draw / Render
+            screen.fill(BLACK)
+            all_sprites.draw(screen)
+            player_r.bullets.draw(screen)
+            player_l.bullets.draw(screen)
 
-                # BARRA de vida
-                player_r.live.draw_live_bar(screen, player_r.live.value)
-                player_l.live.draw_live_bar(screen, player_l.live.value)
+            # BARRA de vida
+            player_r.live.draw_live_bar(screen, player_r.live.value)
+            player_l.live.draw_live_bar(screen, player_l.live.value)
 
-                # *after* drawing everything, flip the display.
-                pygame.display.flip()
+            # *after* drawing everything, flip the display.
+            pygame.display.flip()
 
     pygame.quit()
 
